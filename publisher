@@ -1,25 +1,65 @@
 #!/usr/bin/env python3
 
-import rospy # rospy is the python client library that needs to be imported if you are writting a ROS node
-from std_msgs.msg import String, Header # Message type is String, thatt will be later used in rospy.Publisher
-# std_msgs is a message type
+import rospy
+import threading
+from std_msgs.msg import Header, String
+from ee106s24.msg import EE106lab_custom
+from sensor_msgs.msg import LaserScan
+import random
 
 def talker():
-  rospy.init_node(talker)
-  pub = rospy.Publisher('chatter'. Strinng, queue_size = 10)
-  rate = rospt.Rate(10) # 10hz
+    pub = rospy.Publisher('EE106lab_topic', EE106lab_custom, queue_size=10)
+    rate = rospy.Rate(1)  # 1hz
+    while not rospy.is_shutdown():
+        custom_msg = EE106lab_custom()
+        custom_msg.header = Header()
+        custom_msg.header.stamp = rospy.Time.now()
+        custom_msg.int_data = random.randint(-100, 100)
+        custom_msg.float_data = random.random() * 100
+        custom_msg.string_data = "Random value message"
 
-  while not rospy.is_shutdown():
-    header = Header()
-    header.stamp = roospy.Time.now()
+        rospy.loginfo(f"Publishing: int_data = {custom_msg.int_data}, float_data = {custom_msg.float_data}")
+        pub.publish(custom_msg)
+        rate.sleep()
 
-    content = "welcome to the Robotics Lab" + str(header.stamp)
-    pub.publish.(content)
-    rate.sleep()
+def process_lidar_data(ranges, status_publisher):
+    critical = any(distance < 0.2 for distance in ranges if distance != float('Inf'))
+    major = any(distance < 0.5 for distance in ranges if distance != float('Inf'))
 
-  if __name__ = '__main__':
+    if critical:
+        status_message = "critical"
+    elif major:
+        status_message = "major"
+    else:
+        status_message = "minor"
+
+    status_msg = String()
+    status_msg.data = f'LIDAR alert: {status_message}'
+    status_publisher.publish(status_msg)
+
+def lidar_callback(data, status_publisher):
+    rospy.loginfo("LIDAR Data Received - Timestamp: %s", data.header.stamp.to_sec())
+    process_lidar_data(data.ranges, status_publisher)
+
+def lidar_listener():
+    status_publisher = rospy.Publisher('jackal_robot_status', String, queue_size=10)
+    rospy.Subscriber("scan", LaserScan, lidar_callback, callback_args=status_publisher)
+    rospy.spin()
+
+def main():
+    rospy.init_node('robot_base_node', anonymous=True)
+    # Run each function in its own thread
+    talker_thread = threading.Thread(target=talker)
+    listener_thread = threading.Thread(target=lidar_listener)
+    
+    talker_thread.start()
+    listener_thread.start()
+
+    talker_thread.join()
+    listener_thread.join()
+
+if __name__ == '__main__':
     try:
-      talker()
-    except rospy.ROSInterrutpException:
-      pass
-  
+        main()
+    except rospy.ROSInterruptException:
+        pass
