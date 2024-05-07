@@ -15,7 +15,7 @@ def process_scan_data(ranges, pub):
             if distance < 0.2:
                 status = "critical"
                 break
-            elif distance < 0.5;
+            elif distance < 0.5:
                 status = "major"
     
     # Publish the status
