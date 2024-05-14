@@ -14,7 +14,7 @@ class Turtlebot():
         self.rate = rospy.Rate(10)
         self.run()                                                                   # Self run
 
-# Define 'move_forward' including speed and distance
+# Define Function: 'move_forward' including speed and distance
     def move_forward(self, speed, distance):
         vel = Twist()                                                                # Linear Velocity
         vel.linear.x = abs(speed)
@@ -33,7 +33,7 @@ class Turtlebot():
         vel.linear.x = 0
         self.vel_pub.publish(vel)
 
-# Define open loop using while loop
+# Define Function: 'rotate' open loop using while loop
     def rotate(self, angular_speed, relative_angle):
         vel = Twist()
         vel.linear.x = 0
@@ -51,7 +51,7 @@ class Turtlebot():
         vel.angular.z = 0
         self.vel_pub.publish(vel)
 
-# Self run
+# Define Function: 'run'
     def run(self):
         # Square movement parameters
         speed = 0.2
